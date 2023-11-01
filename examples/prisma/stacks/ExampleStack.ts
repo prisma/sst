@@ -10,7 +10,7 @@ export function ExampleStack({ stack, app }: StackContext) {
     const layerPath = ".sst/layers/prisma";
 
     // Clear out the layer path
-    fs.removeSync(layerPath, { force: true, recursive: true });
+    fs.rmSync(layerPath, { force: true, recursive: true });
     fs.mkdirSync(layerPath, { recursive: true });
 
     // Copy files to the layer
@@ -20,9 +20,10 @@ export function ExampleStack({ stack, app }: StackContext) {
       "node_modules/prisma/build",
     ];
     for (const file of toCopy) {
-      fs.copySync(file, path.join(layerPath, "nodejs", file), {
+      fs.cpSync(file, path.join(layerPath, "nodejs", file), {
         // Do not include binary files that aren't for AWS to save space
         filter: (src) => !src.endsWith("so.node") || src.includes("rhel"),
+        recursive: true,
       });
     }
     const prismaLayer = new lambda.LayerVersion(stack, "PrismaLayer", {
@@ -44,7 +45,7 @@ export function ExampleStack({ stack, app }: StackContext) {
         nodejs: {
           esbuild: {
             // Only reference external modules when deployed
-            externalModules: app.local ? [] : ["@prisma/client", ".prisma"],
+            external: app.local ? [] : ["@prisma/client", ".prisma"],
           },
         },
       },
